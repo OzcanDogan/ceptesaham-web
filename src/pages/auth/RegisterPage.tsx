@@ -21,7 +21,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', password: '', confirmPassword: '',
-    phoneNumber: '', tcKimlik: '', userType: 'Player' as 'Player' | 'BusinessOwner',
+    phoneNumber: '', tcKimlik: '', userType: 'BusinessOwner' as const,
   });
   const [location, setLocation] = useState<LocationValue>({});
   const [error, setError] = useState('');
@@ -39,7 +39,7 @@ export default function RegisterPage() {
       const token = data.jWToken ?? data.jwToken ?? data.JWToken ?? data.token;
       if (!token) throw new Error('Token alınamadı');
       await signIn(token);
-      navigate(form.userType === 'BusinessOwner' ? '/business/dashboard' : '/player/fields');
+      navigate('/business/dashboard');
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Kayıt başarısız.');
     } finally { setLoading(false); }
@@ -68,20 +68,8 @@ export default function RegisterPage() {
             <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', marginBottom: 4, letterSpacing: -0.5 }}>Hesap Oluştur</h2>
             <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 24 }}>Birkaç saniyede kayıt ol</p>
 
-            {/* Hesap türü */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-              {(['Player', 'BusinessOwner'] as const).map(type => (
-                <button key={type} type="button" onClick={() => setForm(f => ({ ...f, userType: type }))}
-                  style={{
-                    padding: '12px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    border: form.userType === type ? '2px solid #22c55e' : '2px solid #e5e7eb',
-                    background: form.userType === type ? '#f0fdf4' : '#fff',
-                    color: form.userType === type ? '#16a34a' : '#6b7280',
-                    transition: 'all 0.15s',
-                  }}>
-                  {type === 'Player' ? '⚽ Oyuncu' : '🏟️ Saha Sahibi'}
-                </button>
-              ))}
+            <div style={{ background: '#f0fdf4', border: '1.5px solid #22c55e', borderRadius: 12, padding: '10px 16px', marginBottom: 20, fontSize: 13, fontWeight: 600, color: '#16a34a' }}>
+              🏟️ Saha Sahibi olarak kayıt oluyorsunuz
             </div>
 
             <form onSubmit={handleSubmit}>

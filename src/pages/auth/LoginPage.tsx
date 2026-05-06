@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { login } from '../../api/auth';
+import { login, getUserInfo } from '../../api/auth';
 import logo from '../../assets/logo-png.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
@@ -23,9 +23,15 @@ export default function LoginPage() {
       const data = await login({ email, password });
       const token = data.jWToken ?? data.jwToken ?? data.JWToken ?? data.token;
       if (!token) throw new Error('Token alınamadı');
+      localStorage.setItem('authToken', token);
+      const userInfo = await getUserInfo();
+      if (userInfo.userType !== 'BusinessOwner') {
+        localStorage.removeItem('authToken');
+        setError('Bu panel sadece saha sahipleri içindir. Lütfen saha sahibi hesabıyla giriş yapın.');
+        return;
+      }
       await signIn(token);
-      if (data.userType === 'BusinessOwner') navigate('/business/dashboard');
-      else navigate('/player/fields');
+      navigate('/business/dashboard');
     } catch {
       setError('E-posta veya şifre hatalı.');
     } finally {

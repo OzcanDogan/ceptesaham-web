@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faThLarge, faCalendar, faWallet, faTrophy, faUsers, faUserCircle,
-  faBuilding, faClipboardList, faCog, faSignOutAlt, faBars, faTimes, faFire
+  faBuilding, faClipboardList, faCog, faSignOutAlt, faBars, faTimes, faFire, faClock
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import './layout.css';
@@ -23,6 +23,7 @@ const playerNav: { to: string; icon: IconDefinition; label: string }[] = [
 const businessNav: { to: string; icon: IconDefinition; label: string }[] = [
   { to: '/business/dashboard', icon: faThLarge, label: 'Dashboard' },
   { to: '/business/my-field', icon: faBuilding, label: 'Saham' },
+  { to: '/business/timeslots', icon: faClock, label: 'Zaman Dilimleri' },
   { to: '/business/reservations', icon: faClipboardList, label: 'Rezervasyonlar' },
   { to: '/business/profile', icon: faCog, label: 'Profil' },
 ];

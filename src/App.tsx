@@ -18,10 +18,12 @@ import LeaderboardPage from './pages/player/LeaderboardPage';
 import PlayerFinderPage from './pages/player/PlayerFinderPage';
 import ProfilePage from './pages/player/ProfilePage';
 
+import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/business/DashboardPage';
 import MyFieldPage from './pages/business/MyFieldPage';
 import BusinessReservationsPage from './pages/business/BusinessReservationsPage';
 import BusinessProfilePage from './pages/business/BusinessProfilePage';
+import FieldTimeSlotsPage from './pages/business/FieldTimeSlotsPage';
 
 function ProtectedRoute({ children, requiredType }: { children: React.ReactNode; requiredType?: string }) {
   const { token, user, isLoading } = useAuth();
@@ -69,14 +71,15 @@ function AppRoutes() {
 
       <Route path="/business/dashboard" element={<ProtectedRoute requiredType="BusinessOwner"><DashboardPage /></ProtectedRoute>} />
       <Route path="/business/my-field" element={<ProtectedRoute requiredType="BusinessOwner"><MyFieldPage /></ProtectedRoute>} />
+      <Route path="/business/timeslots" element={<ProtectedRoute requiredType="BusinessOwner"><FieldTimeSlotsPage /></ProtectedRoute>} />
       <Route path="/business/reservations" element={<ProtectedRoute requiredType="BusinessOwner"><BusinessReservationsPage /></ProtectedRoute>} />
       <Route path="/business/profile" element={<ProtectedRoute requiredType="BusinessOwner"><BusinessProfilePage /></ProtectedRoute>} />
 
       <Route path="/" element={
         user ? (
-          <Navigate to={user.userType === 'BusinessOwner' ? '/business/dashboard' : '/player/fields'} replace />
+          <Navigate to="/business/dashboard" replace />
         ) : (
-          <Navigate to="/login" replace />
+          <LandingPage />
         )
       } />
       <Route path="*" element={<Navigate to="/" replace />} />

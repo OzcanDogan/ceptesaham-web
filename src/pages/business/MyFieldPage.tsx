@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { getMyField, createField, updateField } from '../../api/footballField';
+import React, { useEffect, useRef, useState } from 'react';
+import { getMyField, createField, updateField, getFieldPhotos, uploadFieldPhoto, deleteFieldPhoto, FieldPhotoDto } from '../../api/footballField';
 import { FootballField, FIELD_SERVICES } from '../../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faSave, faClock, faCamera, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
 import LocationPicker, { LocationValue } from '../../components/LocationPicker';
 import '../../components/layout.css';
 
 export default function MyFieldPage() {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [field, setField] = useState<FootballField | null>(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -19,14 +23,48 @@ export default function MyFieldPage() {
     isIndoor: false, services: [] as number[],
   });
 
+  const [photos, setPhotos] = useState<FieldPhotoDto[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<number | null>(null);
+
   useEffect(() => {
     getMyField().then(f => {
       setField(f);
       const services = Array.isArray(f.services) ? f.services : (JSON.parse(f.services || '[]') as number[]);
       setLocation({ cityId: f.cityId, districtId: f.districtId, neighborhoodId: f.neighborhoodId });
       setForm({ fieldName: f.fieldName, address: f.address, hourlyPrice: f.hourlyPrice, startTime: f.startTime, endTime: f.endTime, isIndoor: f.isIndoor, services });
+      getFieldPhotos(f.id).then(setPhotos).catch(() => {});
     }).catch(() => { setEditing(true); }).finally(() => setLoading(false));
   }, []);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !field) return;
+    setUploadingPhoto(true);
+    try {
+      await uploadFieldPhoto(field.id, file);
+      const updated = await getFieldPhotos(field.id);
+      setPhotos(updated);
+    } catch {
+      alert('Fotoğraf yüklenemedi.');
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: number) => {
+    if (!field) return;
+    setDeletingPhotoId(photoId);
+    try {
+      await deleteFieldPhoto(field.id, photoId);
+      setPhotos(prev => prev.filter(p => p.id !== photoId));
+    } catch {
+      alert('Fotoğraf silinemedi.');
+    } finally {
+      setDeletingPhotoId(null);
+    }
+  };
 
   const toggleService = (id: number) => setForm(f => ({ ...f, services: f.services.includes(id) ? f.services.filter(s => s !== id) : [...f.services, id] }));
 
@@ -57,9 +95,17 @@ export default function MyFieldPage() {
           <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{field ? field.fieldName : 'Saha oluştur'}</p>
         </div>
         {field && !editing && (
-          <button onClick={() => setEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1.5px solid #e5e7eb', color: '#374151', borderRadius: 12, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
-            <FontAwesomeIcon icon={faEdit} style={{ fontSize: 14 }} /> Düzenle
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => navigate('/business/timeslots')}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#f0fdf4', border: '1.5px solid #22c55e', color: '#16a34a', borderRadius: 12, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+            >
+              <FontAwesomeIcon icon={faClock} style={{ fontSize: 14 }} /> Zaman Dilimleri
+            </button>
+            <button onClick={() => setEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1.5px solid #e5e7eb', color: '#374151', borderRadius: 12, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+              <FontAwesomeIcon icon={faEdit} style={{ fontSize: 14 }} /> Düzenle
+            </button>
+          </div>
         )}
       </div>
 
@@ -71,8 +117,47 @@ export default function MyFieldPage() {
 
       {!editing && field ? (
         <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-          <div style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: 56 }}>🏟️</span>
+          {/* Fotoğraflar */}
+          {photos.length > 0 ? (
+            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', background: '#000' }}>
+              {photos.map(photo => (
+                <div key={photo.id} style={{ position: 'relative', flexShrink: 0 }}>
+                  <img
+                    src={`data:${photo.contentType};base64,${photo.data}`}
+                    alt={photo.fileName}
+                    style={{ height: 180, objectFit: 'cover', display: 'block' }}
+                  />
+                  <button
+                    onClick={() => handleDeletePhoto(photo.id)}
+                    disabled={deletingPhotoId === photo.id}
+                    style={{
+                      position: 'absolute', top: 8, right: 8,
+                      background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 8,
+                      color: '#fff', cursor: 'pointer', padding: '5px 8px', fontSize: 12,
+                    }}
+                  >
+                    {deletingPhotoId === photo.id ? '...' : <FontAwesomeIcon icon={faTrash} />}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 56 }}>🏟️</span>
+            </div>
+          )}
+          {/* Fotoğraf yükle */}
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePhotoUpload} />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f9fafb', border: '1.5px solid #e5e7eb', color: '#374151', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <FontAwesomeIcon icon={faCamera} />
+              {uploadingPhoto ? 'Yükleniyor...' : 'Fotoğraf Ekle'}
+            </button>
+            <span style={{ fontSize: 12, color: '#9ca3af' }}>JPEG, PNG veya WebP — maks. 10 MB</span>
           </div>
           <div style={{ padding: 24 }}>
             {[
