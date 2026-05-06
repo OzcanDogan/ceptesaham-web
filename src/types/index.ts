@@ -118,18 +118,7 @@ export interface MyMatchesResponse {
 export interface PlayerProfile {
   userId: string;
   displayName: string;
-  preferredPosition: string;
-  dominantFoot: string;
-  skillLevel: string;
-  age?: number;
-  bio?: string;
   totalMatchesPlayed: number;
-  goalsScored: number;
-  assists: number;
-  wins: number;
-  losses: number;
-  cleanSheets: number;
-  manOfTheMatchCount: number;
   averageRating: number;
   cityName?: string;
   districtName?: string;

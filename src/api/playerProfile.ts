@@ -16,7 +16,7 @@ export const getLeaderboard = async (): Promise<PlayerProfile[]> => {
   return response.data;
 };
 
-export const searchPlayers = async (params: { cityId?: number; position?: string; skillLevel?: string }): Promise<PlayerProfile[]> => {
+export const searchPlayers = async (params?: { cityId?: number }): Promise<PlayerProfile[]> => {
   const response = await apiClient.get('/api/PlayerProfile/search', { params });
   return response.data;
 };

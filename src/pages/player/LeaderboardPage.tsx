@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { getLeaderboard } from '../../api/playerProfile';
 import { PlayerProfile } from '../../types';
-import { Trophy, Star, Target, TrendingUp } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar, faTrophy } from '@fortawesome/free-solid-svg-icons';
+import '../../components/layout.css';
 
 export default function LeaderboardPage() {
   const [players, setPlayers] = useState<PlayerProfile[]>([]);
@@ -12,9 +14,7 @@ export default function LeaderboardPage() {
   }, []);
 
   if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-green-600 border-t-transparent" />
-    </div>
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}><div className="spinner" /></div>
   );
 
   const medal = (i: number) => {
@@ -26,47 +26,50 @@ export default function LeaderboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Liderlik Tablosu</h1>
-        <p className="text-gray-500">En iyi oyuncular</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', letterSpacing: -0.5, margin: 0 }}>Liderlik Tablosu</h1>
+        <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>En yüksek puanlı oyuncular</p>
       </div>
 
       {players.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <Trophy size={48} className="mx-auto mb-3 opacity-30" />
-          <p>Henüz veri yok</p>
+        <div style={{ textAlign: 'center', paddingTop: 64, color: '#9ca3af' }}>
+          <FontAwesomeIcon icon={faTrophy} style={{ fontSize: 48, margin: '0 auto 12px', opacity: 0.3, display: 'block' }} />
+          <p style={{ margin: 0 }}>Henüz veri yok</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', overflow: 'hidden' }}>
           {players.map((p, i) => (
-            <div key={p.userId} className={`flex items-center gap-4 p-5 border-b border-gray-50 hover:bg-gray-50 transition ${i === 0 ? 'bg-yellow-50' : ''}`}>
-              <div className="w-10 text-center font-bold text-xl">{medal(i)}</div>
+            <div
+              key={p.userId}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 16, padding: '16px 24px',
+                borderBottom: '1px solid #f9fafb',
+                background: i === 0 ? '#fffbeb' : i === 1 ? '#fafafa' : '#fff',
+              }}
+            >
+              <div style={{ width: 36, textAlign: 'center', fontSize: i < 3 ? 22 : 15, fontWeight: 700, color: '#9ca3af', flexShrink: 0 }}>{medal(i)}</div>
 
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-700">
+              <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 15, flexShrink: 0 }}>
                 {p.displayName?.[0] || '?'}
               </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-800">{p.displayName}</p>
-                <p className="text-xs text-gray-500">{p.preferredPosition} • {p.skillLevel}</p>
-                {p.cityName && <p className="text-xs text-gray-400">{p.cityName}</p>}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 700, color: '#0f1117', fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.displayName}</p>
+                {(p.cityName || p.districtName) && (
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>
+                    {[p.districtName, p.cityName].filter(Boolean).join(', ')}
+                  </p>
+                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="font-bold text-gray-800">{p.totalMatchesPlayed}</p>
-                  <p className="text-xs text-gray-400">Maç</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontWeight: 700, color: '#0f1117', fontSize: 16, margin: 0 }}>{p.totalMatchesPlayed}</p>
+                  <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>Maç</p>
                 </div>
-                <div>
-                  <p className="font-bold text-green-700">{p.wins}</p>
-                  <p className="text-xs text-gray-400">Galibiyet</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center gap-1">
-                    <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                    <p className="font-bold text-gray-800">{p.averageRating?.toFixed(1)}</p>
-                  </div>
-                  <p className="text-xs text-gray-400">Puan</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fffbeb', border: '1px solid #fde68a', padding: '6px 12px', borderRadius: 10 }}>
+                  <FontAwesomeIcon icon={faStar} style={{ color: '#f59e0b', fontSize: 13 }} />
+                  <p style={{ fontWeight: 800, color: '#92400e', fontSize: 17, margin: 0 }}>{p.averageRating?.toFixed(1) ?? '—'}</p>
                 </div>
               </div>
             </div>

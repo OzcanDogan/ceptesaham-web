@@ -3,224 +3,151 @@ import { useAuth } from '../../context/AuthContext';
 import { updateUser, changePassword } from '../../api/auth';
 import { getMyProfile, createOrUpdateProfile } from '../../api/playerProfile';
 import { PlayerProfile } from '../../types';
-import { User, Lock, Trophy, Target } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faLock, faTrophy, faStar } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import '../../components/layout.css';
 
-const POSITIONS = ['Kaleci', 'Defans', 'Orta Saha', 'Forvet'];
-const FEET = ['Sağ', 'Sol', 'Her İkisi'];
-const LEVELS = ['Başlangıç', 'Orta', 'İleri', 'Profesyonel'];
+const inp: React.CSSProperties = { width: '100%', padding: '11px 14px', fontSize: 14, background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, outline: 'none', color: '#111', boxSizing: 'border-box', fontFamily: 'inherit' };
+const lbl: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 };
+const onFocus = (e: React.FocusEvent<HTMLInputElement>) => e.target.style.borderColor = '#22c55e';
+const onBlur  = (e: React.FocusEvent<HTMLInputElement>) => e.target.style.borderColor = '#e5e7eb';
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [tab, setTab] = useState<'account' | 'stats' | 'password'>('account');
   const [msg, setMsg] = useState('');
-
   const [accountForm, setAccountForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
-  const [profileForm, setProfileForm] = useState({
-    displayName: '', preferredPosition: 'Forvet', dominantFoot: 'Sağ',
-    skillLevel: 'Orta', age: '', bio: '',
-  });
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
     if (user) setAccountForm({ firstName: user.firstName, lastName: user.lastName, phoneNumber: user.phoneNumber });
     getMyProfile().then(p => {
       setProfile(p);
-      setProfileForm({
-        displayName: p.displayName || '',
-        preferredPosition: p.preferredPosition || 'Forvet',
-        dominantFoot: p.dominantFoot || 'Sağ',
-        skillLevel: p.skillLevel || 'Orta',
-        age: p.age?.toString() || '',
-        bio: p.bio || '',
-      });
+      setDisplayName(p.displayName || '');
     }).catch(() => {});
   }, [user]);
 
   const handleAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await updateUser(accountForm);
-      await refreshUser();
-      setMsg('Bilgiler güncellendi!');
-    } catch { setMsg('Güncelleme başarısız.'); }
+    try { await updateUser(accountForm); await refreshUser(); setMsg('Bilgiler güncellendi!'); }
+    catch { setMsg('Güncelleme başarısız.'); }
   };
 
   const handlePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
-      setMsg('Şifreler eşleşmiyor.'); return;
-    }
-    try {
-      await changePassword({ oldPassword: passwordForm.oldPassword, newPassword: passwordForm.newPassword });
-      setMsg('Şifre değiştirildi!');
-      setPasswordForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
-    } catch { setMsg('Şifre değiştirme başarısız.'); }
+    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) { setMsg('Şifreler eşleşmiyor.'); return; }
+    try { await changePassword({ oldPassword: passwordForm.oldPassword, newPassword: passwordForm.newPassword }); setMsg('Şifre değiştirildi!'); setPasswordForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' }); }
+    catch { setMsg('Şifre değiştirme başarısız.'); }
   };
 
   const handleProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await createOrUpdateProfile({
-        displayName: profileForm.displayName,
-        preferredPosition: profileForm.preferredPosition,
-        dominantFoot: profileForm.dominantFoot,
-        skillLevel: profileForm.skillLevel,
-        age: profileForm.age ? parseInt(profileForm.age) : undefined,
-        bio: profileForm.bio,
-      });
-      setMsg('Profil güncellendi!');
-    } catch { setMsg('Güncelleme başarısız.'); }
+    try { await createOrUpdateProfile({ displayName }); setMsg('Profil güncellendi!'); }
+    catch { setMsg('Güncelleme başarısız.'); }
   };
 
-  const inputClass = "w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm";
-  const selectClass = inputClass;
+  const isError = msg.includes('başarısız') || msg.includes('eşleşmiyor');
+  const tabs: { key: string; label: string; icon: IconDefinition }[] = [
+    { key: 'account',  label: 'Hesap',         icon: faUser },
+    { key: 'stats',    label: 'Oyuncu Profili', icon: faTrophy },
+    { key: 'password', label: 'Şifre',          icon: faLock },
+  ];
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Profil</h1>
+    <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', letterSpacing: -0.5, margin: 0 }}>Profil</h1>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-2xl font-bold text-green-700">
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
-          </div>
-          <div>
-            <p className="text-xl font-bold text-gray-800">{user?.firstName} {user?.lastName}</p>
-            <p className="text-gray-500">{user?.email}</p>
-            {profile && (
-              <div className="flex gap-4 mt-2 text-sm">
-                <span className="text-gray-600"><b className="text-green-700">{profile.totalMatchesPlayed}</b> Maç</span>
-                <span className="text-gray-600"><b className="text-green-700">{profile.wins}</b> Galibiyet</span>
-                <span className="text-gray-600"><b className="text-green-700">{profile.goalsScored}</b> Gol</span>
-              </div>
-            )}
-          </div>
+      {/* User header */}
+      <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 64, height: 64, background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+          {user?.firstName?.[0]}{user?.lastName?.[0]}
+        </div>
+        <div>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#0f1117', margin: 0 }}>{user?.firstName} {user?.lastName}</p>
+          <p style={{ fontSize: 13, color: '#9ca3af', margin: '3px 0 6px' }}>{user?.email}</p>
+          {profile && (
+            <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
+              <span style={{ color: '#6b7280' }}><b style={{ color: '#22c55e' }}>{profile.totalMatchesPlayed}</b> Maç</span>
+              {profile.averageRating > 0 && (
+                <span style={{ color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FontAwesomeIcon icon={faStar} style={{ color: '#f59e0b', fontSize: 11 }} />
+                  <b style={{ color: '#92400e' }}>{profile.averageRating.toFixed(1)}</b> Puan
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        {[
-          { key: 'account', label: 'Hesap', icon: User },
-          { key: 'stats', label: 'Oyuncu Profili', icon: Trophy },
-          { key: 'password', label: 'Şifre', icon: Lock },
-        ].map(({ key, label, icon: Icon }) => (
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(({ key, label, icon }) => (
           <button
             key={key}
             onClick={() => { setTab(key as any); setMsg(''); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition
-              ${tab === key ? 'bg-green-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', background: tab === key ? '#22c55e' : '#fff', color: tab === key ? '#fff' : '#374151', boxShadow: tab === key ? '0 4px 14px rgba(34,197,94,0.3)' : '0 1px 4px rgba(0,0,0,0.06)' }}
           >
-            <Icon size={14} /> {label}
+            <FontAwesomeIcon icon={icon} style={{ fontSize: 14 }} /> {label}
           </button>
         ))}
       </div>
 
       {msg && (
-        <div className={`p-3 rounded-xl mb-4 text-sm font-medium ${msg.includes('başarısız') || msg.includes('eşleşmiyor') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+        <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13, fontWeight: 500, background: isError ? '#fef2f2' : '#f0fdf4', color: isError ? '#dc2626' : '#16a34a' }}>
           {msg}
         </div>
       )}
 
       {tab === 'account' && (
-        <form onSubmit={handleAccount} className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Ad</label>
-              <input className={inputClass} value={accountForm.firstName} onChange={e => setAccountForm(f => ({ ...f, firstName: e.target.value }))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Soyad</label>
-              <input className={inputClass} value={accountForm.lastName} onChange={e => setAccountForm(f => ({ ...f, lastName: e.target.value }))} />
-            </div>
+        <form onSubmit={handleAccount} style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label style={lbl}>Ad</label><input style={inp} value={accountForm.firstName} onChange={e => setAccountForm(f => ({ ...f, firstName: e.target.value }))} onFocus={onFocus} onBlur={onBlur} /></div>
+            <div><label style={lbl}>Soyad</label><input style={inp} value={accountForm.lastName} onChange={e => setAccountForm(f => ({ ...f, lastName: e.target.value }))} onFocus={onFocus} onBlur={onBlur} /></div>
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Telefon</label>
-            <input className={inputClass} value={accountForm.phoneNumber} onChange={e => setAccountForm(f => ({ ...f, phoneNumber: e.target.value }))} />
-          </div>
-          <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700">
-            Kaydet
-          </button>
+          <div><label style={lbl}>Telefon</label><input style={inp} value={accountForm.phoneNumber} onChange={e => setAccountForm(f => ({ ...f, phoneNumber: e.target.value }))} onFocus={onFocus} onBlur={onBlur} /></div>
+          <button type="submit" style={{ padding: 13, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>Kaydet</button>
         </form>
       )}
 
       {tab === 'stats' && (
-        <form onSubmit={handleProfile} className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <form onSubmit={handleProfile} style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Görünen Ad</label>
-            <input className={inputClass} value={profileForm.displayName} onChange={e => setProfileForm(f => ({ ...f, displayName: e.target.value }))} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Pozisyon</label>
-              <select className={selectClass} value={profileForm.preferredPosition} onChange={e => setProfileForm(f => ({ ...f, preferredPosition: e.target.value }))}>
-                {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Dominant Ayak</label>
-              <select className={selectClass} value={profileForm.dominantFoot} onChange={e => setProfileForm(f => ({ ...f, dominantFoot: e.target.value }))}>
-                {FEET.map(f => <option key={f} value={f}>{f}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Seviye</label>
-              <select className={selectClass} value={profileForm.skillLevel} onChange={e => setProfileForm(f => ({ ...f, skillLevel: e.target.value }))}>
-                {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Yaş</label>
-              <input type="number" className={inputClass} value={profileForm.age} onChange={e => setProfileForm(f => ({ ...f, age: e.target.value }))} />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Hakkımda</label>
-            <textarea className={inputClass + ' resize-none h-24'} value={profileForm.bio} onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))} />
+            <label style={lbl}>Görünen Ad</label>
+            <input style={inp} value={displayName} onChange={e => setDisplayName(e.target.value)} onFocus={onFocus} onBlur={onBlur} placeholder="Maçlarda görünecek ismin" />
           </div>
           {profile && (
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Gol', val: profile.goalsScored },
-                { label: 'Asist', val: profile.assists },
-                { label: 'Galibiyet', val: profile.wins },
-              ].map(({ label, val }) => (
-                <div key={label} className="bg-green-50 rounded-xl p-3 text-center">
-                  <p className="text-xl font-bold text-green-700">{val}</p>
-                  <p className="text-xs text-gray-500">{label}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ background: '#f0fdf4', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+                <p style={{ fontWeight: 800, color: '#16a34a', fontSize: 28, margin: 0 }}>{profile.totalMatchesPlayed}</p>
+                <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>Toplam Maç</p>
+              </div>
+              <div style={{ background: '#fffbeb', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <FontAwesomeIcon icon={faStar} style={{ color: '#f59e0b', fontSize: 16 }} />
+                  <p style={{ fontWeight: 800, color: '#92400e', fontSize: 28, margin: 0 }}>{profile.averageRating > 0 ? profile.averageRating.toFixed(1) : '—'}</p>
                 </div>
-              ))}
+                <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>Ortalama Puan</p>
+              </div>
             </div>
           )}
-          <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700">
-            Kaydet
-          </button>
+          <button type="submit" style={{ padding: 13, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>Kaydet</button>
         </form>
       )}
 
       {tab === 'password' && (
-        <form onSubmit={handlePassword} className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          {['oldPassword', 'newPassword', 'confirmNewPassword'].map((field, i) => (
+        <form onSubmit={handlePassword} style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {(['oldPassword', 'newPassword', 'confirmNewPassword'] as const).map((field, i) => (
             <div key={field}>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                {['Mevcut Şifre', 'Yeni Şifre', 'Yeni Şifre (Tekrar)'][i]}
-              </label>
-              <input
-                type="password"
-                className={inputClass}
-                value={(passwordForm as any)[field]}
-                onChange={e => setPasswordForm(f => ({ ...f, [field]: e.target.value }))}
-                placeholder="••••••••"
-              />
+              <label style={lbl}>{['Mevcut Şifre', 'Yeni Şifre', 'Yeni Şifre (Tekrar)'][i]}</label>
+              <input type="password" style={inp} value={passwordForm[field]} onChange={e => setPasswordForm(f => ({ ...f, [field]: e.target.value }))} onFocus={onFocus} onBlur={onBlur} placeholder="••••••••" />
             </div>
           ))}
-          <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700">
-            Şifreyi Değiştir
-          </button>
+          <button type="submit" style={{ padding: 13, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>Şifreyi Değiştir</button>
         </form>
       )}
     </div>

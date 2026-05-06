@@ -6,80 +6,57 @@ export default function ForgotPasswordPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ token?: string; message?: string } | null>(null);
+  const [result, setResult] = useState<{ token?: string } | null>(null);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const data = await forgotPassword(email);
-      setResult(data);
-    } catch {
-      setError('E-posta bulunamadı.');
-    } finally {
-      setLoading(false);
-    }
+    e.preventDefault(); setLoading(true); setError('');
+    try { const data = await forgotPassword(email); setResult(data); }
+    catch { setError('E-posta bulunamadı.'); }
+    finally { setLoading(false); }
   };
 
-  if (result) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
-          <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Token Alındı</h2>
-          {result.token && (
-            <div className="bg-gray-100 rounded-lg p-4 mb-4">
-              <p className="text-xs text-gray-500 mb-1">Sıfırlama Token'ı (Demo Mod)</p>
-              <p className="font-mono text-sm break-all">{result.token}</p>
-            </div>
-          )}
-          <button
-            onClick={() => navigate('/reset-password', { state: { email, token: result.token } })}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700"
-          >
-            Şifreyi Sıfırla
-          </button>
-          <Link to="/login" className="block mt-3 text-sm text-green-600 hover:underline">
-            Giriş sayfasına dön
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <div className="text-center mb-6">
-          <div className="text-4xl mb-2">🔐</div>
-          <h1 className="text-2xl font-bold text-gray-800">Şifremi Unuttum</h1>
-          <p className="text-gray-500 text-sm mt-1">E-posta adresinizi girin</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="ornek@email.com"
-            required
-          />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
-          >
-            {loading ? 'Gönderiliyor...' : 'Token Gönder'}
-          </button>
-        </form>
-
-        <Link to="/login" className="block mt-4 text-center text-sm text-green-600 hover:underline">
-          Geri dön
-        </Link>
+    <div style={{ minHeight: '100vh', background: '#f5f5f7', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 420 }}>
+        {result ? (
+          <div style={{ background: '#fff', borderRadius: 24, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f1117', marginBottom: 8 }}>Token Alındı</h2>
+            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>Demo mod: Token aşağıda görüntüleniyor</p>
+            {result.token && (
+              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px 16px', marginBottom: 20, textAlign: 'left' }}>
+                <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>Sıfırlama Token'ı</p>
+                <p style={{ fontFamily: 'monospace', fontSize: 12, color: '#374151', wordBreak: 'break-all' }}>{result.token}</p>
+              </div>
+            )}
+            <button onClick={() => navigate('/reset-password', { state: { email, token: result.token } })}
+              style={{ width: '100%', padding: 13, fontSize: 15, fontWeight: 700, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>
+              Şifreyi Sıfırla →
+            </button>
+          </div>
+        ) : (
+          <div style={{ background: '#fff', borderRadius: 24, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', marginBottom: 4 }}>Şifremi Unuttum</h2>
+              <p style={{ fontSize: 13, color: '#9ca3af' }}>E-posta adresinizi girin</p>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>E-posta</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="ornek@email.com"
+                style={{ width: '100%', padding: '11px 14px', fontSize: 14, background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, outline: 'none', color: '#111', boxSizing: 'border-box', marginBottom: 16, fontFamily: 'inherit' }}
+                onFocus={e => e.target.style.borderColor = '#22c55e'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
+              {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#dc2626', marginBottom: 16 }}>{error}</div>}
+              <button type="submit" disabled={loading} style={{ width: '100%', padding: 13, fontSize: 15, fontWeight: 700, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>
+                {loading ? 'Gönderiliyor...' : 'Token Gönder →'}
+              </button>
+            </form>
+            <div style={{ marginTop: 18, textAlign: 'center' }}>
+              <Link to="/login" style={{ fontSize: 13, color: '#22c55e', textDecoration: 'none', fontWeight: 500 }}>← Geri dön</Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

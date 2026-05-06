@@ -15,6 +15,9 @@ export const register = async (data: {
   userType: string;
   phoneNumber: string;
   tcKimlik: string;
+  cityId?: number;
+  districtId?: number;
+  neighborhoodId?: number;
 }) => {
   const response = await apiClient.post('/api/Account/register', data);
   return response.data;

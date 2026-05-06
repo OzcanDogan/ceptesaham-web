@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { updateUser, changePassword } from '../../api/auth';
-import { User, Lock } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faLock } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import '../../components/layout.css';
+
+const inp: React.CSSProperties = { width: '100%', padding: '11px 14px', fontSize: 14, background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, outline: 'none', color: '#111', boxSizing: 'border-box', fontFamily: 'inherit' };
+const lbl: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 };
+const focus = (e: React.FocusEvent<HTMLInputElement>) => e.target.style.borderColor = '#22c55e';
+const blur  = (e: React.FocusEvent<HTMLInputElement>) => e.target.style.borderColor = '#e5e7eb';
 
 export default function BusinessProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -16,106 +24,80 @@ export default function BusinessProfilePage() {
 
   const handleAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await updateUser(accountForm);
-      await refreshUser();
-      setMsg('Bilgiler güncellendi!');
-    } catch { setMsg('Güncelleme başarısız.'); }
+    try { await updateUser(accountForm); await refreshUser(); setMsg('Bilgiler güncellendi!'); }
+    catch { setMsg('Güncelleme başarısız.'); }
   };
 
   const handlePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
-      setMsg('Şifreler eşleşmiyor.'); return;
-    }
-    try {
-      await changePassword({ oldPassword: passwordForm.oldPassword, newPassword: passwordForm.newPassword });
-      setMsg('Şifre değiştirildi!');
-      setPasswordForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
-    } catch { setMsg('Şifre değiştirme başarısız.'); }
+    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) { setMsg('Şifreler eşleşmiyor.'); return; }
+    try { await changePassword({ oldPassword: passwordForm.oldPassword, newPassword: passwordForm.newPassword }); setMsg('Şifre değiştirildi!'); setPasswordForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' }); }
+    catch { setMsg('Şifre değiştirme başarısız.'); }
   };
 
-  const inputClass = "w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm";
+  const isError = msg.includes('başarısız') || msg.includes('eşleşmiyor');
+  const tabs: { key: string; label: string; icon: IconDefinition }[] = [
+    { key: 'account',  label: 'Hesap', icon: faUser },
+    { key: 'password', label: 'Şifre', icon: faLock },
+  ];
 
   return (
-    <div className="max-w-xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Profil</h1>
+    <div style={{ maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', letterSpacing: -0.5, margin: 0 }}>Profil</h1>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 flex items-center gap-4">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-2xl font-bold text-green-700">
+      {/* Header */}
+      <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 64, height: 64, background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
           {user?.firstName?.[0]}{user?.lastName?.[0]}
         </div>
         <div>
-          <p className="text-xl font-bold text-gray-800">{user?.firstName} {user?.lastName}</p>
-          <p className="text-gray-500">{user?.email}</p>
-          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Saha Sahibi</span>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#0f1117', margin: 0 }}>{user?.firstName} {user?.lastName}</p>
+          <p style={{ fontSize: 13, color: '#9ca3af', margin: '3px 0 6px' }}>{user?.email}</p>
+          <span style={{ fontSize: 11, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', padding: '2px 10px', borderRadius: 20, fontWeight: 600 }}>Saha Sahibi</span>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        {[
-          { key: 'account', label: 'Hesap', icon: User },
-          { key: 'password', label: 'Şifre', icon: Lock },
-        ].map(({ key, label, icon: Icon }) => (
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {tabs.map(({ key, label, icon }) => (
           <button
             key={key}
             onClick={() => { setTab(key as any); setMsg(''); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${tab === key ? 'bg-green-600 text-white' : 'bg-white text-gray-600'}`}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', background: tab === key ? '#22c55e' : '#fff', color: tab === key ? '#fff' : '#374151', boxShadow: tab === key ? '0 4px 14px rgba(34,197,94,0.3)' : '0 1px 4px rgba(0,0,0,0.06)' }}
           >
-            <Icon size={14} /> {label}
+            <FontAwesomeIcon icon={icon} style={{ fontSize: 14 }} /> {label}
           </button>
         ))}
       </div>
 
       {msg && (
-        <div className={`p-3 rounded-xl mb-4 text-sm font-medium ${msg.includes('başarısız') || msg.includes('eşleşmiyor') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+        <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13, fontWeight: 500, background: isError ? '#fef2f2' : '#f0fdf4', color: isError ? '#dc2626' : '#16a34a' }}>
           {msg}
         </div>
       )}
 
       {tab === 'account' && (
-        <form onSubmit={handleAccount} className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Ad</label>
-              <input className={inputClass} value={accountForm.firstName} onChange={e => setAccountForm(f => ({ ...f, firstName: e.target.value }))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Soyad</label>
-              <input className={inputClass} value={accountForm.lastName} onChange={e => setAccountForm(f => ({ ...f, lastName: e.target.value }))} />
-            </div>
+        <form onSubmit={handleAccount} style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label style={lbl}>Ad</label><input style={inp} value={accountForm.firstName} onChange={e => setAccountForm(f => ({ ...f, firstName: e.target.value }))} onFocus={focus} onBlur={blur} /></div>
+            <div><label style={lbl}>Soyad</label><input style={inp} value={accountForm.lastName} onChange={e => setAccountForm(f => ({ ...f, lastName: e.target.value }))} onFocus={focus} onBlur={blur} /></div>
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Telefon</label>
-            <input className={inputClass} value={accountForm.phoneNumber} onChange={e => setAccountForm(f => ({ ...f, phoneNumber: e.target.value }))} />
-          </div>
-          <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700">
-            Kaydet
-          </button>
+          <div><label style={lbl}>Telefon</label><input style={inp} value={accountForm.phoneNumber} onChange={e => setAccountForm(f => ({ ...f, phoneNumber: e.target.value }))} onFocus={focus} onBlur={blur} /></div>
+          <button type="submit" style={{ padding: 13, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>Kaydet</button>
         </form>
       )}
 
       {tab === 'password' && (
-        <form onSubmit={handlePassword} className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          {['oldPassword', 'newPassword', 'confirmNewPassword'].map((field, i) => (
+        <form onSubmit={handlePassword} style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {(['oldPassword', 'newPassword', 'confirmNewPassword'] as const).map((field, i) => (
             <div key={field}>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                {['Mevcut Şifre', 'Yeni Şifre', 'Yeni Şifre (Tekrar)'][i]}
-              </label>
-              <input
-                type="password"
-                className={inputClass}
-                value={(passwordForm as any)[field]}
-                onChange={e => setPasswordForm(f => ({ ...f, [field]: e.target.value }))}
-                placeholder="••••••••"
-              />
+              <label style={lbl}>{['Mevcut Şifre', 'Yeni Şifre', 'Yeni Şifre (Tekrar)'][i]}</label>
+              <input type="password" style={inp} value={passwordForm[field]} onChange={e => setPasswordForm(f => ({ ...f, [field]: e.target.value }))} onFocus={focus} onBlur={blur} placeholder="••••••••" />
             </div>
           ))}
-          <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700">
-            Şifreyi Değiştir
-          </button>
+          <button type="submit" style={{ padding: 13, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>Şifreyi Değiştir</button>
         </form>
       )}
     </div>

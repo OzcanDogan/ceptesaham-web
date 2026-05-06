@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getMyField, createField, updateField } from '../../api/footballField';
 import { FootballField, FIELD_SERVICES } from '../../types';
-import { Building2, Edit, Save } from 'lucide-react';
-
-const CITIES = [{ id: 1, name: 'İstanbul' }, { id: 2, name: 'Ankara' }, { id: 3, name: 'İzmir' }];
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import LocationPicker, { LocationValue } from '../../components/LocationPicker';
+import '../../components/layout.css';
 
 export default function MyFieldPage() {
   const [field, setField] = useState<FootballField | null>(null);
@@ -11,10 +12,10 @@ export default function MyFieldPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
-
+  const [location, setLocation] = useState<LocationValue>({});
   const [form, setForm] = useState({
-    fieldName: '', cityId: 1, districtId: 1, neighborhoodId: 1,
-    address: '', hourlyPrice: 100, startTime: '08:00', endTime: '23:00',
+    fieldName: '', address: '', hourlyPrice: 100,
+    startTime: '08:00', endTime: '23:00',
     isIndoor: false, services: [] as number[],
   });
 
@@ -22,146 +23,118 @@ export default function MyFieldPage() {
     getMyField().then(f => {
       setField(f);
       const services = Array.isArray(f.services) ? f.services : (JSON.parse(f.services || '[]') as number[]);
-      setForm({
-        fieldName: f.fieldName, cityId: f.cityId, districtId: f.districtId,
-        neighborhoodId: f.neighborhoodId, address: f.address, hourlyPrice: f.hourlyPrice,
-        startTime: f.startTime, endTime: f.endTime, isIndoor: f.isIndoor, services,
-      });
-    }).catch(() => {
-      setEditing(true);
-    }).finally(() => setLoading(false));
+      setLocation({ cityId: f.cityId, districtId: f.districtId, neighborhoodId: f.neighborhoodId });
+      setForm({ fieldName: f.fieldName, address: f.address, hourlyPrice: f.hourlyPrice, startTime: f.startTime, endTime: f.endTime, isIndoor: f.isIndoor, services });
+    }).catch(() => { setEditing(true); }).finally(() => setLoading(false));
   }, []);
 
-  const toggleService = (id: number) => {
-    setForm(f => ({
-      ...f,
-      services: f.services.includes(id) ? f.services.filter(s => s !== id) : [...f.services, id],
-    }));
-  };
+  const toggleService = (id: number) => setForm(f => ({ ...f, services: f.services.includes(id) ? f.services.filter(s => s !== id) : [...f.services, id] }));
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setMsg('');
+    e.preventDefault(); setSaving(true); setMsg('');
     try {
-      if (field) {
-        await updateField({ ...form, id: field.id });
-        setMsg('Saha güncellendi!');
-      } else {
-        await createField(form);
-        setMsg('Saha oluşturuldu!');
-      }
+      const payload = { ...form, cityId: location.cityId || 1, districtId: location.districtId || 1, neighborhoodId: location.neighborhoodId || 1 };
+      if (field) { await updateField({ ...payload, id: field.id }); setMsg('Saha güncellendi!'); }
+      else { await createField(payload); setMsg('Saha oluşturuldu!'); }
       const updated = await getMyField();
-      setField(updated);
-      setEditing(false);
-    } catch {
-      setMsg('İşlem başarısız.');
-    } finally {
-      setSaving(false);
-    }
+      setField(updated); setEditing(false);
+    } catch { setMsg('İşlem başarısız.'); }
+    finally { setSaving(false); }
   };
 
-  const inputClass = "w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm";
+  const inp: React.CSSProperties = { width: '100%', padding: '11px 14px', fontSize: 14, background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, outline: 'none', color: '#111', boxSizing: 'border-box', fontFamily: 'inherit' };
+  const lbl: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 };
+  const focus = (e: React.FocusEvent<any>) => e.target.style.borderColor = '#22c55e';
+  const blur  = (e: React.FocusEvent<any>) => e.target.style.borderColor = '#e5e7eb';
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-green-600 border-t-transparent" />
-    </div>
-  );
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}><div className="spinner" /></div>;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Saham</h1>
-          <p className="text-gray-500">{field ? field.fieldName : 'Saha oluştur'}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', letterSpacing: -0.5, margin: 0 }}>Saham</h1>
+          <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{field ? field.fieldName : 'Saha oluştur'}</p>
         </div>
         {field && !editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50"
-          >
-            <Edit size={16} /> Düzenle
+          <button onClick={() => setEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1.5px solid #e5e7eb', color: '#374151', borderRadius: 12, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+            <FontAwesomeIcon icon={faEdit} style={{ fontSize: 14 }} /> Düzenle
           </button>
         )}
       </div>
 
       {msg && (
-        <div className={`p-3 rounded-xl mb-4 text-sm font-medium ${msg.includes('başarısız') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+        <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 16, fontSize: 13, fontWeight: 500, background: msg.includes('başarısız') ? '#fef2f2' : '#f0fdf4', color: msg.includes('başarısız') ? '#dc2626' : '#16a34a' }}>
           {msg}
         </div>
       )}
 
       {!editing && field ? (
-        <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          <div className="bg-gradient-to-r from-green-500 to-green-700 rounded-xl h-36 flex items-center justify-center mb-2">
-            <span className="text-6xl">🏟️</span>
+        <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+          <div style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 56 }}>🏟️</span>
           </div>
-          {[
-            { label: 'Saha Adı', val: field.fieldName },
-            { label: 'Adres', val: field.address },
-            { label: 'Şehir', val: field.cityName },
-            { label: 'Fiyat', val: `₺${field.hourlyPrice}/saat` },
-            { label: 'Çalışma Saatleri', val: `${field.startTime} - ${field.endTime}` },
-            { label: 'Tür', val: field.isIndoor ? 'Kapalı' : 'Açık' },
-          ].map(({ label, val }) => (
-            <div key={label} className="flex justify-between border-b border-gray-50 pb-3">
-              <span className="text-gray-500 text-sm">{label}</span>
-              <span className="font-medium text-gray-800 text-sm">{val}</span>
-            </div>
-          ))}
+          <div style={{ padding: 24 }}>
+            {[
+              { label: 'Saha Adı',          val: field.fieldName },
+              { label: 'Adres',             val: field.address },
+              { label: 'Şehir',             val: field.cityName },
+              { label: 'Fiyat',             val: `₺${field.hourlyPrice}/saat`, green: true },
+              { label: 'Çalışma Saatleri', val: `${field.startTime} – ${field.endTime}` },
+              { label: 'Tür',               val: field.isIndoor ? 'Kapalı' : 'Açık' },
+            ].map(({ label, val, green }) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid #f9fafb' }}>
+                <span style={{ fontSize: 13, color: '#9ca3af' }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: green ? '#22c55e' : '#0f1117' }}>{val}</span>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
-        <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <form onSubmit={handleSave} style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div><label style={lbl}>Saha Adı</label><input style={inp} value={form.fieldName} onChange={e => setForm(f => ({ ...f, fieldName: e.target.value }))} onFocus={focus} onBlur={blur} required /></div>
+
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Saha Adı</label>
-            <input className={inputClass} value={form.fieldName} onChange={e => setForm(f => ({ ...f, fieldName: e.target.value }))} required />
+            <label style={lbl}>Konum (İl / İlçe / Mahalle)</label>
+            <LocationPicker value={location} onChange={setLocation} />
           </div>
+
+          <div><label style={lbl}>Tam Adres</label><input style={inp} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} onFocus={focus} onBlur={blur} required placeholder="Sokak, bina no, kat..." /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label style={lbl}>Açılış Saati</label><input type="time" style={inp} value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} onFocus={focus} onBlur={blur} /></div>
+            <div><label style={lbl}>Kapanış Saati</label><input type="time" style={inp} value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} onFocus={focus} onBlur={blur} /></div>
+          </div>
+          <div><label style={lbl}>Saatlik Fiyat (₺)</label><input type="number" style={inp} value={form.hourlyPrice} onChange={e => setForm(f => ({ ...f, hourlyPrice: Number(e.target.value) }))} onFocus={focus} onBlur={blur} /></div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input type="checkbox" id="indoor" checked={form.isIndoor} onChange={e => setForm(f => ({ ...f, isIndoor: e.target.checked }))} style={{ width: 16, height: 16, accentColor: '#22c55e' }} />
+            <label htmlFor="indoor" style={{ fontSize: 14, fontWeight: 500, color: '#374151', cursor: 'pointer' }}>Kapalı Saha</label>
+          </div>
+
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Adres</label>
-            <input className={inputClass} value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} required />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Açılış Saati</label>
-              <input type="time" className={inputClass} value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Kapanış Saati</label>
-              <input type="time" className={inputClass} value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Saatlik Fiyat (₺)</label>
-            <input type="number" className={inputClass} value={form.hourlyPrice} onChange={e => setForm(f => ({ ...f, hourlyPrice: Number(e.target.value) }))} />
-          </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="indoor" checked={form.isIndoor} onChange={e => setForm(f => ({ ...f, isIndoor: e.target.checked }))} className="w-4 h-4" />
-            <label htmlFor="indoor" className="text-sm font-medium text-gray-700">Kapalı Saha</label>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Hizmetler</p>
-            <div className="flex flex-wrap gap-2">
+            <p style={{ ...lbl, marginBottom: 10 }}>Hizmetler</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {FIELD_SERVICES.map(s => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => toggleService(s.id)}
-                  className={`text-sm px-3 py-1.5 rounded-xl border transition ${form.services.includes(s.id) ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'}`}
+                  style={{ fontSize: 13, padding: '7px 14px', borderRadius: 20, border: `1.5px solid ${form.services.includes(s.id) ? '#22c55e' : '#e5e7eb'}`, background: form.services.includes(s.id) ? '#22c55e' : '#fff', color: form.services.includes(s.id) ? '#fff' : '#6b7280', fontWeight: 500, cursor: 'pointer' }}
                 >
                   {s.label}
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex gap-3">
+
+          <div style={{ display: 'flex', gap: 10 }}>
             {field && (
-              <button type="button" onClick={() => setEditing(false)} className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-50">
+              <button type="button" onClick={() => setEditing(false)} style={{ flex: 1, padding: 13, background: '#f9fafb', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
                 İptal
               </button>
             )}
-            <button type="submit" disabled={saving} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2">
-              <Save size={16} /> {saving ? 'Kaydediliyor...' : field ? 'Güncelle' : 'Oluştur'}
+            <button type="submit" disabled={saving} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 13, background: saving ? '#86efac' : '#22c55e', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>
+              <FontAwesomeIcon icon={faSave} style={{ fontSize: 15 }} /> {saving ? 'Kaydediliyor...' : field ? 'Güncelle' : 'Oluştur'}
             </button>
           </div>
         </form>

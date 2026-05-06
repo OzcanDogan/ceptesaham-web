@@ -2,58 +2,63 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOpenMatches, getMyMatches } from '../../api/publicMatch';
 import { PublicMatch, MyMatchesResponse } from '../../types';
-import { Trophy, Users, MapPin, Calendar, Clock } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrophy, faUsers, faMapMarkerAlt, faCalendar, faClock, faPlus } from '@fortawesome/free-solid-svg-icons';
+import '../../components/layout.css';
 
-function statusBadge(s: string) {
-  const map: Record<string, string> = {
-    Open: 'bg-green-100 text-green-700',
-    Full: 'bg-orange-100 text-orange-700',
-    Confirmed: 'bg-blue-100 text-blue-700',
-    Completed: 'bg-gray-100 text-gray-600',
-    Cancelled: 'bg-red-100 text-red-700',
-  };
-  return map[s] || 'bg-gray-100 text-gray-600';
-}
-
-function statusLabel(s: string) {
-  const map: Record<string, string> = {
-    Open: 'Açık', Full: 'Dolu', Confirmed: 'Onaylı', Completed: 'Tamamlandı', Cancelled: 'İptal',
-  };
-  return map[s] || s;
-}
+const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
+  Open:      { label: 'Açık',        bg: '#f0fdf4', color: '#16a34a' },
+  Full:      { label: 'Dolu',        bg: '#fff7ed', color: '#c2410c' },
+  Confirmed: { label: 'Onaylı',      bg: '#eff6ff', color: '#2563eb' },
+  Completed: { label: 'Tamamlandı', bg: '#f9fafb', color: '#6b7280' },
+  Cancelled: { label: 'İptal',       bg: '#fef2f2', color: '#dc2626' },
+};
 
 function MatchCard({ match, onClick }: { match: PublicMatch; onClick: () => void }) {
+  const s = STATUS_MAP[match.status] || { label: match.status, bg: '#f9fafb', color: '#6b7280' };
+  const pct = (match.currentPlayerCount / match.maxPlayers) * 100;
+
   return (
-    <div onClick={onClick} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 cursor-pointer hover:shadow-md transition">
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="font-bold text-gray-800 text-lg leading-tight">{match.title}</h3>
-        <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusBadge(match.status)}`}>
-          {statusLabel(match.status)}
-        </span>
-      </div>
-      <div className="space-y-1 text-sm text-gray-500 mb-4">
-        <div className="flex items-center gap-2">
-          <MapPin size={14} /> <span>{match.footballFieldName}</span>
+    <div
+      onClick={onClick}
+      style={{ background: '#fff', borderRadius: 20, border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', cursor: 'pointer', overflow: 'hidden', transition: 'box-shadow 0.2s, transform 0.2s' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px rgba(0,0,0,0.13)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 16px rgba(0,0,0,0.07)'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}
+    >
+      <div style={{ background: 'linear-gradient(135deg, #1e293b, #334155)', padding: '18px 20px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+          <h3 style={{ fontWeight: 700, color: '#fff', fontSize: 15, lineHeight: 1.3, margin: 0 }}>{match.title}</h3>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 20, background: s.bg, color: s.color, flexShrink: 0 }}>{s.label}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar size={14} /> <span>{new Date(match.matchDate).toLocaleDateString('tr-TR')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Clock size={14} /> <span>{match.startTime} - {match.endTime}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+          <FontAwesomeIcon icon={faMapMarkerAlt} style={{ fontSize: 11 }} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.footballFieldName}</span>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users size={16} className="text-green-600" />
-          <span className="text-sm font-semibold text-green-700">
-            {match.currentPlayerCount}/{match.maxPlayers} oyuncu
-          </span>
+
+      <div style={{ padding: '16px 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14, fontSize: 13, color: '#6b7280' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FontAwesomeIcon icon={faCalendar} style={{ color: '#9ca3af', fontSize: 12 }} />
+            <span>{new Date(match.matchDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FontAwesomeIcon icon={faClock} style={{ color: '#9ca3af', fontSize: 12 }} />
+            <span>{match.startTime}</span>
+          </div>
         </div>
-        <div className="w-full max-w-24 bg-gray-200 rounded-full h-2 ml-3">
-          <div
-            className="bg-green-500 h-2 rounded-full"
-            style={{ width: `${(match.currentPlayerCount / match.maxPlayers) * 100}%` }}
-          />
+
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#374151' }}>
+              <FontAwesomeIcon icon={faUsers} style={{ fontSize: 12 }} />
+              <span style={{ fontWeight: 600 }}>{match.currentPlayerCount}/{match.maxPlayers}</span>
+              <span style={{ color: '#9ca3af' }}>oyuncu</span>
+            </div>
+            <span style={{ fontSize: 11, color: '#9ca3af' }}>{match.teamSize}x{match.teamSize}</span>
+          </div>
+          <div style={{ width: '100%', background: '#f3f4f6', borderRadius: 999, height: 6 }}>
+            <div style={{ height: 6, borderRadius: 999, background: pct >= 100 ? '#f97316' : '#22c55e', width: `${Math.min(pct, 100)}%`, transition: 'width 0.3s' }} />
+          </div>
         </div>
       </div>
     </div>
@@ -69,79 +74,63 @@ export default function PublicMatchesPage() {
 
   useEffect(() => {
     Promise.all([getOpenMatches(), getMyMatches()])
-      .then(([open, my]) => {
-        setOpenMatches(open);
-        setMyMatches(my);
-      })
+      .then(([open, my]) => { setOpenMatches(open); setMyMatches(my); })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="animate-spin rounded-full h-10 w-10 border-4 border-green-600 border-t-transparent" />
-    </div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 240 }}><div className="spinner" /></div>
   );
 
   const myAll = [...(myMatches?.organizedMatches || []), ...(myMatches?.joinedMatches || [])];
+  const current = tab === 'open' ? openMatches : myAll;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Maçlar</h1>
-          <p className="text-gray-500">Açık maçlara katıl veya kendi maçını oluştur</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', letterSpacing: -0.5, margin: 0 }}>Maçlar</h1>
+          <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>Açık maçlara katıl veya yeni maç oluştur</p>
         </div>
         <button
           onClick={() => navigate('/player/matches/create')}
-          className="bg-green-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-green-700"
+          style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}
         >
-          + Maç Oluştur
+          <FontAwesomeIcon icon={faPlus} style={{ fontSize: 15 }} /> Maç Oluştur
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setTab('open')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition ${tab === 'open' ? 'bg-green-600 text-white' : 'bg-white text-gray-600'}`}
-        >
-          Açık Maçlar ({openMatches.length})
-        </button>
-        <button
-          onClick={() => setTab('my')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition ${tab === 'my' ? 'bg-green-600 text-white' : 'bg-white text-gray-600'}`}
-        >
-          Maçlarım ({myAll.length})
-        </button>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: 4, width: 'fit-content' }}>
+        {[
+          { key: 'open', label: 'Açık Maçlar', count: openMatches.length },
+          { key: 'my',   label: 'Maçlarım',    count: myAll.length },
+        ].map(({ key, label, count }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key as any)}
+            style={{ padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', background: tab === key ? '#22c55e' : 'transparent', color: tab === key ? '#fff' : '#6b7280', transition: 'all 0.15s' }}
+          >
+            {label} <span style={{ fontSize: 11, opacity: 0.75 }}>({count})</span>
+          </button>
+        ))}
       </div>
 
-      {tab === 'open' && (
-        openMatches.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <Trophy size={48} className="mx-auto mb-3 opacity-30" />
-            <p>Açık maç yok</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {openMatches.map(m => (
-              <MatchCard key={m.id} match={m} onClick={() => navigate(`/player/matches/${m.id}`)} />
-            ))}
-          </div>
-        )
-      )}
-
-      {tab === 'my' && (
-        myAll.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <Trophy size={48} className="mx-auto mb-3 opacity-30" />
-            <p>Maç yok</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {myAll.map(m => (
-              <MatchCard key={m.id} match={m} onClick={() => navigate(`/player/matches/${m.id}`)} />
-            ))}
-          </div>
-        )
+      {current.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '64px 0', background: '#fff', borderRadius: 20, border: '1px solid rgba(0,0,0,0.05)' }}>
+          <FontAwesomeIcon icon={faTrophy} style={{ fontSize: 48, margin: '0 auto 12px', color: '#e5e7eb', display: 'block' }} />
+          <p style={{ fontWeight: 600, color: '#6b7280', fontSize: 15, margin: 0 }}>Maç bulunamadı</p>
+          {tab === 'open' && (
+            <button onClick={() => navigate('/player/matches/create')} style={{ marginTop: 12, background: 'none', border: 'none', color: '#22c55e', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+              İlk maçı sen oluştur!
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {current.map(m => (
+            <MatchCard key={m.id} match={m} onClick={() => navigate(`/player/matches/${m.id}`)} />
+          ))}
+        </div>
       )}
     </div>
   );

@@ -2,7 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllFields } from '../../api/footballField';
 import { FootballField, parseServices, FIELD_SERVICES } from '../../types';
-import { MapPin, Clock, Star, IndianRupee, Home } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMapMarkerAlt, faClock, faStar, faSearch } from '@fortawesome/free-solid-svg-icons';
+import '../../components/layout.css';
+
+const CARD_GRADIENTS = [
+  'linear-gradient(135deg, #4ade80, #16a34a)',
+  'linear-gradient(135deg, #60a5fa, #0284c7)',
+  'linear-gradient(135deg, #c084fc, #7c3aed)',
+  'linear-gradient(135deg, #fb923c, #dc2626)',
+  'linear-gradient(135deg, #2dd4bf, #0d9488)',
+  'linear-gradient(135deg, #818cf8, #4f46e5)',
+];
 
 export default function FieldListPage() {
   const [fields, setFields] = useState<FootballField[]>([]);
@@ -20,88 +31,95 @@ export default function FieldListPage() {
   );
 
   if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent" />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 12 }}>
+      <div className="spinner" />
+      <p style={{ color: '#9ca3af', fontSize: 13 }}>Sahalar yükleniyor...</p>
     </div>
   );
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Sahalar</h1>
-        <p className="text-gray-500">Size en yakın halı sahayı bulun</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f1117', letterSpacing: -0.5, margin: 0 }}>Sahalar</h1>
+        <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>{fields.length} saha listelendi</p>
       </div>
 
-      <input
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Saha adı veya şehir ara..."
-        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-6 focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
+      <div style={{ position: 'relative', marginBottom: 24 }}>
+        <FontAwesomeIcon icon={faSearch} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: 16 }} />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Saha adı veya şehir ara..."
+          style={{ width: '100%', padding: '12px 14px 12px 40px', fontSize: 14, background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14, outline: 'none', color: '#111', boxSizing: 'border-box', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', fontFamily: 'inherit' }}
+          onFocus={e => e.target.style.borderColor = '#22c55e'}
+          onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+        />
+      </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-5xl mb-3">⚽</div>
-          <p>Saha bulunamadı</p>
+        <div style={{ textAlign: 'center', paddingTop: 80 }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🔍</div>
+          <p style={{ fontWeight: 600, color: '#6b7280', fontSize: 15 }}>Saha bulunamadı</p>
+          <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 4 }}>Farklı bir arama deneyin</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map(field => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+          {filtered.map((field, i) => {
             const services = parseServices(field.services);
             return (
               <div
                 key={field.id}
                 onClick={() => navigate(`/player/fields/${field.id}`)}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden border border-gray-100"
+                style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer', overflow: 'hidden', transition: 'box-shadow 0.2s, transform 0.2s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px rgba(0,0,0,0.13)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 16px rgba(0,0,0,0.07)'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}
               >
-                <div className="bg-gradient-to-r from-green-500 to-green-700 h-32 flex items-center justify-center">
-                  <span className="text-6xl">🏟️</span>
+                <div style={{ background: CARD_GRADIENTS[i % CARD_GRADIENTS.length], height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <span style={{ fontSize: 52 }}>🏟️</span>
+                  {field.isIndoor && (
+                    <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>
+                      Kapalı
+                    </span>
+                  )}
                 </div>
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-2">
-                    <h2 className="font-bold text-gray-800 text-lg leading-tight">{field.fieldName}</h2>
+                <div style={{ padding: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+                    <h2 style={{ fontWeight: 700, color: '#0f1117', fontSize: 15, lineHeight: 1.3, margin: 0 }}>{field.fieldName}</h2>
                     {field.averageRating ? (
-                      <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
-                        <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm font-semibold text-yellow-700">{field.averageRating.toFixed(1)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#fffbeb', border: '1px solid #fde68a', padding: '3px 8px', borderRadius: 8, flexShrink: 0 }}>
+                        <FontAwesomeIcon icon={faStar} style={{ color: '#f59e0b', fontSize: 11 }} />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#92400e' }}>{field.averageRating.toFixed(1)}</span>
                       </div>
                     ) : null}
                   </div>
-
-                  <div className="flex items-center gap-1 text-gray-500 text-sm mb-1">
-                    <MapPin size={14} />
-                    <span>{field.cityName}{field.districtName ? `, ${field.districtName}` : ''}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-gray-500 text-sm mb-3">
-                    <Clock size={14} />
-                    <span>{field.startTime} - {field.endTime}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-700 font-bold text-lg">₺{field.hourlyPrice}</span>
-                      <span className="text-gray-400 text-sm">/saat</span>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: 13, marginBottom: 4 }}>
+                      <FontAwesomeIcon icon={faMapMarkerAlt} style={{ color: '#9ca3af', fontSize: 12, flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{field.districtName ? `${field.districtName}, ` : ''}{field.cityName}</span>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${field.isIndoor ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                      {field.isIndoor ? 'Kapalı' : 'Açık'}
-                    </span>
-                  </div>
-
-                  {services.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-3">
-                      {services.slice(0, 3).map(id => (
-                        <span key={id} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          {FIELD_SERVICES.find(s => s.id === id)?.label}
-                        </span>
-                      ))}
-                      {services.length > 3 && (
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          +{services.length - 3}
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: 13 }}>
+                      <FontAwesomeIcon icon={faClock} style={{ color: '#9ca3af', fontSize: 12, flexShrink: 0 }} />
+                      <span>{field.startTime} — {field.endTime}</span>
                     </div>
-                  )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid #f3f4f6' }}>
+                    <div>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: '#22c55e' }}>₺{field.hourlyPrice}</span>
+                      <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 3 }}>/saat</span>
+                    </div>
+                    {services.length > 0 && (
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {services.slice(0, 2).map(id => (
+                          <span key={id} style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>
+                            {FIELD_SERVICES.find(s => s.id === id)?.label}
+                          </span>
+                        ))}
+                        {services.length > 2 && (
+                          <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', padding: '2px 7px', borderRadius: 6 }}>+{services.length - 2}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
