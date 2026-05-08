@@ -25,7 +25,7 @@ export default function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0];
   const todayRes = reservations.filter(r => r.date?.startsWith(today));
-  const totalRevenue = reservations.filter(r => r.status === 'Completed').reduce((s, r) => s + (r.totalPrice || 0), 0);
+  const totalRevenue = reservations.filter(r => r.status === 'Confirmed').reduce((s, r) => s + (r.totalPrice || 0), 0);
 
   const stats: { icon: IconDefinition; label: string; val: string; bg: string; iconBg: string }[] = [
     { icon: faCalendar,   label: 'Bugünkü Rezervasyon', val: String(todayRes.length),       bg: '#eff6ff', iconBg: '#3b82f6' },
