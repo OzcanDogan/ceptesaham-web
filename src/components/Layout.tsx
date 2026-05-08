@@ -25,6 +25,7 @@ const businessNav: { to: string; icon: IconDefinition; label: string }[] = [
   { to: '/business/my-field', icon: faBuilding, label: 'Saham' },
   { to: '/business/timeslots', icon: faClock, label: 'Zaman Dilimleri' },
   { to: '/business/reservations', icon: faClipboardList, label: 'Rezervasyonlar' },
+  { to: '/business/wallet', icon: faWallet, label: 'Cüzdan' },
   { to: '/business/profile', icon: faCog, label: 'Profil' },
 ];
 

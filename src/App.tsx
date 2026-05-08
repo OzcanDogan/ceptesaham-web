@@ -24,6 +24,7 @@ import MyFieldPage from './pages/business/MyFieldPage';
 import BusinessReservationsPage from './pages/business/BusinessReservationsPage';
 import BusinessProfilePage from './pages/business/BusinessProfilePage';
 import FieldTimeSlotsPage from './pages/business/FieldTimeSlotsPage';
+import BusinessWalletPage from './pages/business/BusinessWalletPage';
 
 function ProtectedRoute({ children, requiredType }: { children: React.ReactNode; requiredType?: string }) {
   const { token, user, isLoading } = useAuth();
@@ -73,6 +74,7 @@ function AppRoutes() {
       <Route path="/business/my-field" element={<ProtectedRoute requiredType="BusinessOwner"><MyFieldPage /></ProtectedRoute>} />
       <Route path="/business/timeslots" element={<ProtectedRoute requiredType="BusinessOwner"><FieldTimeSlotsPage /></ProtectedRoute>} />
       <Route path="/business/reservations" element={<ProtectedRoute requiredType="BusinessOwner"><BusinessReservationsPage /></ProtectedRoute>} />
+      <Route path="/business/wallet" element={<ProtectedRoute requiredType="BusinessOwner"><BusinessWalletPage /></ProtectedRoute>} />
       <Route path="/business/profile" element={<ProtectedRoute requiredType="BusinessOwner"><BusinessProfilePage /></ProtectedRoute>} />
 
       <Route path="/" element={
